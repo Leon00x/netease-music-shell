@@ -20,9 +20,10 @@
 ## 功能特性
 
 - ✅ **无边框沉浸窗口**——内容铺满全窗，鼠标移到顶部浮现毛玻璃标题条
+- ⭕ **原生透明圆角**——16px 全四角裁剪，深色/浅色主题均无需额外适配
 - 🖐️ **全宽拖拽**，双击标题条最大化/还原；右上角悬浮 最小化 / 最大化 / 关闭 按钮（关闭按钮 hover 变红）
 - 🔒 **独立数据目录**，登录状态持久化，不污染系统浏览器
-- 🪶 **原生体验**：GTK 原生窗口、应用图标、独立的 Wayland/X11 进程
+- 🪶 **原生体验**：GTK 原生窗口、显式应用图标、独立的 Wayland/X11 进程
 
 ## 安装
 
@@ -110,6 +111,16 @@ npm run dev
    → 通过 `src-tauri/capabilities/netease-remote.json` 精确授权
    （仅 `music.163.com` 域、仅窗口四项权限）
 
+4. **无边框窗口圆角**：`body` 的背景默认会传播到 WebView 的方形画布，而且页面含有
+   `position: fixed` 的全屏元素
+   → 给根元素设置完全透明的渐变以阻止背景传播，再通过
+   `body { transform: translateZ(0); overflow: hidden; border-radius: 16px; }`
+   统一裁剪普通内容和固定定位内容。该方案不移动页面 DOM，也不扫描或复制主题背景。
+
+5. **窗口图标**：Linux 桌面环境可能缓存桌面图标，而 Tauri 窗口也有独立的运行时图标
+   → 打包配置提供 32/128/256px PNG，同时在创建窗口时通过 `Image::from_bytes`
+   显式设置图标。替换图标后需要重新编译二进制。
+
 ## 故障排查
 
 | 现象 | 解决 |
@@ -126,7 +137,7 @@ netease-music-shell/
 ├── src/                            # 占位页（实际加载远程 URL）
 ├── release/                        # 本地编译产物（不入库）
 └── src-tauri/
-    ├── src/main.rs                 # 全部核心逻辑 ~90 行
+    ├── src/main.rs                 # 窗口、圆角、标题栏及图标设置
     ├── tauri.conf.json             # 窗口 / UA / 打包配置
     ├── capabilities/
     │   └── netease-remote.json     # 远程页面 IPC 白名单

@@ -1,7 +1,7 @@
 // 网易云音乐 Web Player 桌面壳
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use tauri::{WebviewUrl, WebviewWindowBuilder};
+use tauri::{image::Image, WebviewUrl, WebviewWindowBuilder};
 
 const USER_AGENT: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
 
@@ -15,39 +15,26 @@ if (typeof window.requestIdleCallback !== 'function') {
 }
 "#;
 
-// 圆角窗口（macOS 风格）：窗口透明 + 圆角裁剪
-// 诊断结论：窗口透明与圆角机制本身正常（空白透明页可圆角）；网易云四角被
-// 站点的“(fixed/absolute) 全屏不透明层”涂死。因此这里注入 JS 找到这些
-// 覆盖全视口的容器，直接给它们自身加 border-radius（圆它们自己的背景），
-// 并加 overflow:hidden 裁掉位于圆角内的普通流内容，配合透明 html 露出四角。
+// 圆角窗口：用透明渐变占据根元素的 canvas 背景，阻止 body 背景传播成方形；
+// 再让 body 成为 fixed 后代的 containing block，并在 body 上统一裁剪。
 const ROUND_CORNERS: &str = r#"
 (function(){
-  function round(){
-    if (!document.body) return;
-    var h = document.documentElement, b = document.body;
-    h.style.setProperty('background-color','transparent','important');
-    // 兜底：body 设 relative + 圆角 + 裁切，先保证基础
-    b.style.setProperty('position','relative','important');
-    b.style.setProperty('border-radius','16px','important');
-    b.style.setProperty('overflow','hidden','important');
-    // 找到覆盖全视口的不透明容器，逐层圆它们的“自己的背景”，并裁切子内容
-    var IW = innerWidth, IH = innerHeight, els = document.querySelectorAll('body *');
-    var seen = [];
-    for (var i = 0; i < els.length; i++){
-      var e = els[i], r = e.getBoundingClientRect();
-      if (r.width >= IW*0.9 && r.height >= IH*0.9){
-        e.style.setProperty('border-radius','16px','important');
-      }
-    }
+  function install(){
+    if (!document.head) return false;
+    if (document.getElementById('__nmcorner-style')) return true;
+    var style = document.createElement('style');
+    style.id = '__nmcorner-style';
+    style.textContent = ''
+      + 'html{background-color:transparent!important;'
+      + 'background-image:linear-gradient(transparent,transparent)!important;'
+      + 'overflow:hidden!important;}'
+      + 'body{position:fixed!important;inset:0!important;margin:0!important;'
+      + 'border-radius:16px!important;overflow:hidden!important;'
+      + 'transform:translateZ(0)!important;}';
+    document.head.appendChild(style);
+    return true;
   }
-  function tryStart(){
-    if (document.body) { round(); return true; }
-    return false;
-  }
-  if (document.readyState === 'complete') setTimeout(round, 300);
-  else window.addEventListener('load', function(){ setTimeout(round, 400); });
-  // 站点是 SPA 会重排，多试几次
-  setTimeout(round, 1200); setTimeout(round, 2500); setTimeout(round, 4500);
+  if (!install()) document.addEventListener('DOMContentLoaded', install, { once:true });
 })();
 "#;
 
@@ -60,7 +47,7 @@ const WINDOW_CONTROLS: &str = r#"
     + 'align-items:center;justify-content:flex-end;padding:0 10px;gap:2px;pointer-events:none;'
     + 'opacity:0;transition:opacity .16s ease;user-select:none;-webkit-user-select:none;'
     + 'background:linear-gradient(rgba(0,0,0,.50),rgba(0,0,0,.18));backdrop-filter:blur(10px);'
-    + 'border-radius:12px 12px 0 0;'
+    + 'border-radius:16px 16px 0 0;'
     + 'font-family:system-ui,sans-serif;}'
     + '#nm-wc.on{pointer-events:auto;opacity:1;}'
     + '#nm-wc .nm-drag{flex:1;height:100%;}'
@@ -118,11 +105,13 @@ const WINDOW_CONTROLS: &str = r#"
 fn main() {
     tauri::Builder::default()
         .setup(|app| {
+            let icon = Image::from_bytes(include_bytes!("../icons/icon.png"))?;
             WebviewWindowBuilder::new(
                 app,
                 "main",
                 WebviewUrl::External("https://music.163.com/st/webplayer".parse()?),
             )
+            .icon(icon)?
             .title("网易云音乐")
             .inner_size(1280.0, 860.0)
             .min_inner_size(960.0, 640.0)
