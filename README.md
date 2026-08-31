@@ -15,6 +15,23 @@ NetEase Music Shell 使用 [Tauri 2](https://tauri.app/) 和系统 WebKitGTK，�
 [网易云音乐 Web 播放器](https://music.163.com/st/webplayer) 封装成独立桌面应用。
 它保留网页端完整功能，同时提供原生窗口、独立登录状态和系统媒体控制，无需 Electron。
 
+## 界面预览
+
+<p align="center">
+  <img src="docs/images/screenshot-1.webp" alt="NetEase Music Shell 首页" width="100%">
+</p>
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/screenshot-2.webp" alt="沉浸播放与歌词界面"></td>
+    <td width="50%"><img src="docs/images/screenshot-3.webp" alt="悬浮窗口控制栏"></td>
+  </tr>
+  <tr>
+    <td align="center">沉浸播放与歌词</td>
+    <td align="center">顶部悬浮窗口控制栏</td>
+  </tr>
+</table>
+
 ## 功能
 
 - 沉浸式无边框窗口，支持 16px 透明圆角
@@ -82,7 +99,7 @@ sudo pacman -S webkit2gtk-4.1 base-devel librsvg
 需要 Node.js 22+ 和 Rust 1.77+。
 
 ```bash
-npm install
+npm ci
 npm run build
 ```
 
@@ -112,13 +129,14 @@ npm run dev
 
 远程页面权限定义在
 [`src-tauri/capabilities/netease-remote.json`](src-tauri/capabilities/netease-remote.json)。
-更详细的维护背景见 [`HANDOFF.md`](HANDOFF.md)。
+更详细的维护背景见 [`docs/maintenance.md`](docs/maintenance.md)。
 
 ## 项目结构
 
 ```text
 netease-music-shell/
 ├── .github/workflows/release.yml  # Release 自动构建
+├── docs/                          # 截图与维护文档
 ├── src/                           # Tauri 前端占位目录
 ├── src-tauri/
 │   ├── capabilities/              # 远程页面权限
@@ -127,6 +145,8 @@ netease-music-shell/
 │   ├── Cargo.toml
 │   └── tauri.conf.json
 ├── package.json
+├── CONTRIBUTING.md
+├── SECURITY.md
 └── README.md
 ```
 
@@ -141,7 +161,8 @@ netease-music-shell/
 
 ## 参与贡献
 
-Issue 和 Pull Request 都欢迎。提交改动前请至少运行：
+Issue 和 Pull Request 都欢迎，具体流程见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+提交改动前请至少运行：
 
 ```bash
 cargo check --locked --manifest-path src-tauri/Cargo.toml
@@ -154,8 +175,9 @@ npm run build
 
 本项目是非官方第三方客户端，与网易云音乐及其运营方无隶属或合作关系。
 音乐、商标、服务与网页内容的权利归各自权利人所有。使用本项目时请遵守网易云音乐服务条款
-及所在地法律法规。
+及所在地法律法规。第三方名称、图标和截图的权利说明见 [NOTICE](NOTICE)。
 
 ## 许可证
 
-本项目基于 [MIT License](LICENSE) 发布。
+本项目原创源代码和文档基于 [MIT License](LICENSE) 发布；该许可证不覆盖第三方商标、
+图标、音乐、专辑封面、歌词或网页内容。

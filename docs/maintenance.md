@@ -48,15 +48,16 @@ body {
 `Image::from_bytes` 显式设置窗口图标。因此修改图标后必须重新编译，单独替换 PNG
 不会改变已经生成的二进制。
 
-GNOME 还可能按桌面文件中的图标路径缓存图标。开发机安装位置为用户目录时，可改用
-新的图标文件名并同步更新 `.desktop` 文件的 `Icon=` 值来绕过缓存。
-
-## 验证
+## 发布检查
 
 ```bash
 cargo check --locked --manifest-path src-tauri/Cargo.toml
-cargo build --release --locked --manifest-path src-tauri/Cargo.toml
+npm ci
+npm run build
 ```
 
-发布前还需在真实应用中检查：四角透明、深浅主题切换、弹窗/菜单、播放条、自定义标题栏
-以及 Dock 图标。离屏 WebKit 测试不包含登录态，只能作为辅助验证。
+发布前还需在真实应用中检查：四角透明、深浅主题切换、弹窗/菜单、播放条、自定义标题栏、
+Dock 图标和 MPRIS。离屏 WebKit 测试不包含登录态，只能作为辅助验证。
+
+发布版本必须在 `package.json`、`src-tauri/Cargo.toml` 和 `src-tauri/tauri.conf.json`
+保持一致。图标是编译期嵌入资源，替换 PNG 后要确保 Rust 目标确实重新编译。
